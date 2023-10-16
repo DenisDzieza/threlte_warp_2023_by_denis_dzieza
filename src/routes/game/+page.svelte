@@ -1,0 +1,1 @@
+<h1>This is the fancy game page</h1>
