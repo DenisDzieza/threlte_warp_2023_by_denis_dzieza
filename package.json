@@ -3,6 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
+    "server": "bun ./game-server/index.ts",
+    "app": "bun --bun run dev --host",
     "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",

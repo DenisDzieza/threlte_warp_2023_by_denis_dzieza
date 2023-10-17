@@ -29,14 +29,12 @@ export const actions = {
 
         cookies.set('user', user, {
             path: '/',
-            httpOnly: true,
-            secure: true
+            httpOnly: true
         });
     
         cookies.set('color', color, {
             path: '/',
-            httpOnly: true,
-            secure: true
+            httpOnly: true
         });
 
         throw redirect(303, '/game');
