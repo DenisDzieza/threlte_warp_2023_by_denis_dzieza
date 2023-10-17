@@ -1,10 +1,3 @@
-/* 
-// Not used for now
-function getCookieValueByName(cookie, name): string {
-  const match = cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
-  return match ? match[2] : "";
-} */
-
 import { Position, User } from "../global/types/user";
 
 function getUsernameFromReq(req: Request): string | null {
@@ -45,7 +38,6 @@ function calculatePosition(movement: string, userPosition: Position): Position {
 }
 
 const userMap: Map<string, User> = new Map();
-// const userMap: User[] = [];
 
 const server = Bun.serve<{ data: { user: string; color: string; } }>({
   port: process.env.PORT || 3001,
@@ -69,10 +61,6 @@ const server = Bun.serve<{ data: { user: string; color: string; } }>({
   },
   websocket: {
     open(ws) {
-      // if (userMap.find((user) => { user.name === ws.data.user })) return;
-
-      console.log('HAS NO ENTRY', userMap)
-
       const initUser = {
         name: ws.data.user,
         color: ws.data.color,
@@ -84,8 +72,6 @@ const server = Bun.serve<{ data: { user: string; color: string; } }>({
       };
       userMap.set(ws.data.user, initUser);
 
-      // userMap.push(initUser);
-
       const msg = `${ws.data.user} has entered the game`;
       console.log(msg);
       ws.subscribe("the-group-chat");
@@ -95,12 +81,8 @@ const server = Bun.serve<{ data: { user: string; color: string; } }>({
 
     },
     message(ws, message) {
-      // console.log(`${ws.data.name} wrote a message`);
-      // console.log(ws.data.user);
+      if (!userMap.has(ws.data.user)) return;
 
-      if(!userMap.has(ws.data.user)) return;
-
-      //console.log('MESSAGE', message);
       if (typeof message === 'string') {
         const clientMessage: {
           movement?: string;
@@ -109,9 +91,7 @@ const server = Bun.serve<{ data: { user: string; color: string; } }>({
 
         if (clientMessage.movement) {
           const user = userMap.get(ws.data.user)
-          /* const userIndex = userMap.findIndex((user) => {
-            user.name === ws.data.user
-          }) */
+
           if (!user) return;
 
           user.position = calculatePosition(clientMessage.movement, user.position);
@@ -123,16 +103,11 @@ const server = Bun.serve<{ data: { user: string; color: string; } }>({
       // ws.publish("the-group-chat", `${ws.data.user}: ${message}`);
     },
     close(ws) {
-      // if(!userMap.has(ws.data.user)) return;
-
       const msg = `${ws.data.user} has left the game`;
 
       console.log(msg);
       userMap.delete(ws.data.user);
-      /* const userIndex = userMap.findIndex((user) => {
-        user.name === ws.data.user
-      });
-      delete userMap[userIndex]; */
+
       ws.publish("the-group-chat", msg);
       ws.unsubscribe("the-group-chat");
       ws.unsubscribe("user-movement-map");
@@ -140,38 +115,13 @@ const server = Bun.serve<{ data: { user: string; color: string; } }>({
   },
 });
 
-console.log(`Listening on ${server.hostname}:${server.port}`);
-
-/* function stringifyObjectMap(key, value) {
-  if(value instanceof Map) {
-    return {
-      dataType: 'Map',
-      value: Array.from(value.entries()),
-    };
-  } else {
-    return value;
-  }
-} */
-
-/* function parseObjectMap(key, value) {
-  if(typeof value === 'object' && value !== null) {
-    if (value.dataType === 'Map') {
-      return new Map(value.value);
-    }
-  }
-  return value;
-} */
-
 function broadcastUserPositions() {
-  // console.log(JSON.stringify(userMap));
-
-  // const users = userMap.entries();
-  console.log('ARRAY', userMap)
-
+  // console.log('ARRAY', userMap)
   const convertedMap: User[] = Array.from(userMap.values());
 
   server.publish('user-movement-map', JSON.stringify(convertedMap))
-  // server.publish('user-movement-map', JSON.stringify(userMap, stringifyObjectMap))
 }
 
-setInterval(broadcastUserPositions, 1000)
+setInterval(broadcastUserPositions, 1000);
+
+console.log(`Listening on ${server.hostname}:${server.port}`);

@@ -1,7 +1,10 @@
 <script lang="ts">
+	import Scene from '$lib/scene/Scene.svelte';
+	import { Canvas } from '@threlte/core';
+	import { Sky } from '@threlte/extras';
 	import { writable } from 'svelte/store';
+	import type { User } from '../../../global/types/user';
 	import type { PageData } from './$types';
-    import type { User } from '../../../global/types/user';
 
 	export let data: PageData;
 
@@ -16,12 +19,6 @@
 			}
 		}
 	]);
-
-	console.log('STORE', $userMap);
-
-	/* setContext('userMap', userMap); */
-
-	/* export let userMap: Map<string, User> = new Map(); */
 
 	function parseObjectMap(key, value) {
 		if (typeof value === 'object' && value !== null) {
@@ -38,18 +35,7 @@
 
 	// message is received
 	socket.addEventListener('message', (event) => {
-		// const onlineMap: Map<string, User> = JSON.parse(event.data, parseObjectMap);
-		// console.log('WS - MESSAGE', JSON.parse(event.data, parseObjectMap));
-		// const self = onlineMap.get(data.user);
-
-		/* if(onlineMap.entries.length > 0) { */
-		// console.log('Message', JSON.parse(event.data));
-		/* userMap.set(Array.from(onlineMap.values())) */
-		console.warn(JSON.parse(event.data));
 		userMap.set(JSON.parse(event.data));
-
-		// console.log(JSON.parse(event.data));
-		/* } */
 	});
 
 	socket.addEventListener('user-movement-map', (event) => {
@@ -109,7 +95,6 @@
 	};
 
 	function onKeyDown(event) {
-		/* console.log('KEY-DOWN', event); */
 		if (!socket.OPEN) return;
 
 		switch (event.code) {
@@ -139,13 +124,22 @@
 
 <svelte:window on:keydown={onKeyDown} />
 
-<div class="full-screen"><!-- Place the scene right here --></div>
+<div class="full-screen">
+    <Canvas>
+		<Sky
+			setEnvironment={true}
+			turbidity={presets.sunset.turbidity}
+			rayleigh={presets.sunset.rayleigh}
+			azimuth={presets.sunset.azimuth}
+			elevation={presets.sunset.elevation}
+			mieCoefficient={presets.sunset.mieCoefficient}
+			mieDirectionalG={presets.sunset.mieDirectionalG}
+		/>
+		<Scene exposure={presets.sunset.exposure} users={$userMap}/>
+	</Canvas>
+</div>
 
-<div class="absolute z-10 opacity-0" />
-
-<h1>Logged in as: {data.user}</h1>
-<br />
-<h2>Choosen color: {data.color}</h2>
+<div class="absolute z-10 opacity-0" ><!-- if enough spare time implement chat inside this div --></div>
 
 <style>
 	.full-screen {
